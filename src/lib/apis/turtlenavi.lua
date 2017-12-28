@@ -228,7 +228,7 @@ local function moveByCoord(axis, distance, permit_dig)
 
   -- 移動
   for i=1, math.abs(distance) do
-    turtleapis.STEP(bearing, true, permit_dig)
+    turtleapis.STEP_CERTAINLY(bearing, true, permit_dig)
   end
 end
 
