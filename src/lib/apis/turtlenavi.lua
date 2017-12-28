@@ -105,37 +105,8 @@ function calcRelativeCoord(src, dest)
 end
 
 --*********************************************************
--- 移動系関数
+-- 回転関数
 --*********************************************************
-
------------------------------------------------------------
--- 移動系補助関数
------------------------------------------------------------
--- 移動軸と移動距離の正負から移動方角を得るテーブル
-local _bearing_movebycoord = { x = {}, y = {}, z = {} }
-local _directions =
-  { const.NORTH, const.SOUTH, const.WEST, const.EAST, const.UP, const.DOWN }
-for _i, direction in ipairs(_directions) do
-  local axis, sign = bearingutils.getMatchingAxis(direction)
-  local sign_string = sign and 'positive' or 'negative'
-  _bearing_movebycoord[axis][sign_string] = direction
-end
------------------------------------------------------------
--- 移動軸と移動距離を指定してタートルを移動させるよ
--- @param axis 移動軸。xyzのどれかを文字列で指定
--- @param distance 移動距離。負でもOK
--- @param permit_dig 邪魔なブロックのdig許可
------------------------------------------------------------
-local function moveByCoord(axis, distance, permit_dig)
-  -- 軸と移動距離の正負から移動する方角を決める
-  local sign_string = (distance >= 0 ) and 'positive' or 'negative'
-  local bearing = _bearing_movebycoord[axis][sign_string]
-
-  -- 移動
-  for i=1, distance do
-    turtleapis.STEP(bearing, true, permit_dig)
-  end
-end
 
 -- ある方角を向いてる時、
 -- 特定の方角に向きを変える場合に
@@ -179,25 +150,108 @@ function faceTo(bearing)
   return turtleapis.TURN(bearing)
 end
 
+
+--*****************************************************************************
+--* 移動関数
+--*****************************************************************************
+
+-----------------------------------------------------------
+-- 現在向いている方角と、移動したい相対座標から、
+-- 軸をどういう順番で移動するのが早いか調べるよ
+-- @param relative_dest 相対移動距離。 { x = dx, y = dy, z = dz }なテーブル
+-- @return 軸の順番を示す文字列
+-----------------------------------------------------------
+local function getBestAxisOrder(relative_dest)
+  -- *** Y軸は最後に移動することにするから、最後まで無視しちゃうよ ***
+  local order = ''
+  -- まず各軸の移動方向をしらべるよ
+  local bearings = {}
+  for _i, axis in ipairs{ 'x', 'z' } do
+    bearings[axis] = bearingutils.getMoveBearing(axis, relative_dest[axis] > 0)
+  end
+
+  -- 相対方角(現在の正面・右・左・後ろ、の方角)を格納したテーブル
+  -- この順番で、X・Y軸の移動方角と一致するか調べて、該当した方角から移動するのが早いよ
+  local relative_bearings = {
+    getBearing(),
+    bearingutils.getRightSide(getBearing()),
+    bearingutils.getLeftSide (getBearing()),
+    bearingutils.getOpposite (getBearing()),
+  }
+  -- 相対方角とX・Z軸の移動方向を比べて、X・Z軸どっちを先に移動するか考えるよ
+  for _i, bearing in ipairs(relative_bearings) do
+    for _i, axis in ipairs{ 'x', 'z' } do
+      if bearings[axis] == bearing then
+        order = order .. axis
+      end
+    end
+  end
+  -- Y軸は最後に移動するよ
+  order = order ..'y'
+  return order
+end
+
+-----------------------------------------------------------
+-- 上のgetBestAxisOrder()とだいたい同じだけど、
+-- 優先しなければならない、基礎にする移動順を指定できるよ。
+-- @param base_order 基礎にする移動順。基準順。これにたいする変更は許されない。
+-- @param relative_dest 相対移動距離。 { x = dx, y = dy, z = dz }なテーブル
+-- @return 軸の順番を示す文字列
+-----------------------------------------------------------
+local function getAxisOrder(base_order, relative_dest)
+  -- 基準順は無条件で確定だよ
+  local order = base_order or ''
+
+  -- 基準を考慮しない、最適な移動順を探すよ
+  local best_order = getBestAxisOrder(relative_dest)
+
+  -- 基準順と最適な移動順を比べて、移動順を決定するよ
+  for i=1, 3 do
+    local axis = string.sub(best_order, i, i)
+    if not string.find(order, axis) then
+      -- 対象の軸がまだなければ、最後にくっつけるよ
+      order = order .. axis
+    end
+  end
+  print(order)
+  return order
+end
+
+-----------------------------------------------------------
+-- 移動軸と移動距離を指定してタートルを移動させるよ
+-- @param axis 移動軸。xyzのどれかを文字列で指定
+-- @param distance 移動距離。負でもOK
+-- @param permit_dig 邪魔なブロックのdig許可
+-----------------------------------------------------------
+local function moveByCoord(axis, distance, permit_dig)
+  -- 軸と移動距離の正負から移動する方角を決める
+  local bearing = bearingutils.getMoveBearing(axis, distance >= 0)
+
+  -- 移動
+  for i=1, math.abs(distance) do
+    turtleapis.STEP(bearing, true, permit_dig)
+  end
+end
+
 -----------------------------------------------------------
 -- タートルを指定座標に移動させるよ
 -- @param dest 移動先の座標配列 { x, y, z }
--- @param order 座標軸の優先順 'xz'のような文字列。省略可
 -- @param permit_dig 移動途中で邪魔なブロックのdig()許可
+-- @param order 座標軸の優先順 'xz'のような文字列。省略可
 -----------------------------------------------------------
-function moveTo(dest, order, permit_dig)
+function moveTo(dest, permit_dig, order)
   -- 移動量
   local dx, dy, dz = calcRelativeCoord({getCoord()}, dest)
-  local distance = { x = dx, y = dy, z = dz }
+  local relative_dest = { x = dx, y = dy, z = dz }
 
-  -- 仮実装。移動順はxyz固定
-  order = 'xyz'
+  -- 回転回数が少なくなるような移動順を取得
+  order = getAxisOrder(order, relative_dest)
 
   -- 移動処理
   for i=1, 3 do
+    local axis = string.sub(order, i, i)
+    moveByCoord(axis, relative_dest[axis], permit_dig)
   end
-
-
 end
 
 --*********************************************************
