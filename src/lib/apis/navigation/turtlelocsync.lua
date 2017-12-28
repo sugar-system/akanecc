@@ -118,9 +118,9 @@ function new(location)
 
   -- forward/backは上で作ったのを使って作るよ
   -- 向いてる方向で結果が違うよ
-  _move[const.FORWARD] = function(n) return _move[location.getBearing()](n) end
+  _move[const.FORWARD] = function(n) return _move[ location.getBearing() ](n) end
   _move[const.BACK   ] = function(n)
-    return _move[bearingutils.getOpposite(location.getBearing())](n)
+    return _move[ bearingutils.getOpposite(location.getBearing()) ](n)
   end
 
   -----------------------------------------------------------
