@@ -4,6 +4,7 @@
 -- 方角に関わる便利関数をあつめたよ
 -- @author 琴葉茜(さとうけい)
 -----------------------------------------------------------
+os.loadAPI('/lib/apis/const')
 
 -----------------------------------------------------------
 -- getOpposite()で使うテーブル
@@ -65,4 +66,26 @@ end
 -----------------------------------------------------------
 function getLeftSide(bearing)
   return _left_side[bearing]
+end
+
+-----------------------------------------------------------
+-- getMatchingAxis()で使うテーブル
+-- 左側の方角が入ってるよ
+-----------------------------------------------------------
+local _matching_axis = {
+  [const.NORTH] = { 'z', false },
+  [const.SOUTH] = { 'z', true  },
+  [const.WEST ] = { 'x', false },
+  [const.EAST ] = { 'x', true  },
+  [const.DOWN ] = { 'y', false },
+  [const.UP   ] = { 'y', true  },
+}
+-----------------------------------------------------------
+-- 方角に対応する座標軸と正負を返すよ
+-- @param bearing 方角
+-- @return 対応する座標軸を現す文字列 [x / y / z]
+-- @return 符号の正負。[正:true / 負:false]
+-----------------------------------------------------------
+function getMatchingAxis(bearing)
+  return unpack( _matching_axis[bearing] )
 end
