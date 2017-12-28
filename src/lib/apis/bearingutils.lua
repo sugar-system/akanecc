@@ -89,3 +89,23 @@ local _matching_axis = {
 function getMatchingAxis(bearing)
   return unpack( _matching_axis[bearing] )
 end
+
+-----------------------------------------------------------
+-- 移動軸と移動距離の正負から移動方角を得るテーブル
+local _move_bearing = { x = {}, y = {}, z = {} }
+local _directions =
+{ const.NORTH, const.SOUTH, const.WEST, const.EAST, const.UP, const.DOWN }
+for _i, direction in ipairs(_directions) do
+  local axis, sign = bearingutils.getMatchingAxis(direction)
+  _move_bearing[axis][sign] = direction
+end
+
+-----------------------------------------------------------
+-- 移動軸とそれに対する移動距離の符号から、移動方角を取得する
+-- @param axis 移動軸
+-- @param sign 移動軸に対する移動距離の符号
+-- @return 移動方角
+-----------------------------------------------------------
+function getMoveBearing(axis, sign)
+  return _move_bearing[axis][sign]
+end
