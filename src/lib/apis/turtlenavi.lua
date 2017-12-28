@@ -221,14 +221,18 @@ end
 -- @param axis 移動軸。xyzのどれかを文字列で指定
 -- @param distance 移動距離。負でもOK
 -- @param permit_dig 邪魔なブロックのdig許可
+-- @param callback タートルが1歩歩くごとに呼ばれるcallback関数
 -----------------------------------------------------------
-local function moveByCoord(axis, distance, permit_dig)
+local function moveByCoord(axis, distance, permit_dig, callback)
   -- 軸と移動距離の正負から移動する方角を決める
   local bearing = bearingutils.getMoveBearing(axis, distance >= 0)
 
   -- 移動
   for i=1, math.abs(distance) do
     turtleapis.STEP_CERTAINLY(bearing, true, permit_dig)
+    if callback then
+      callback()
+    end
   end
 end
 
@@ -236,9 +240,15 @@ end
 -- タートルを指定座標に移動させるよ
 -- @param dest 移動先の座標配列 { x, y, z }
 -- @param permit_dig 移動途中で邪魔なブロックのdig()許可
+-- @param callback タートルが1歩歩くごとに呼ばれるcallback関数
+--  callback省略時には、moveto_stepイベントを発生させるよ
 -- @param order 座標軸の優先順 'xz'のような文字列。省略可
 -----------------------------------------------------------
-function moveTo(dest, permit_dig, order)
+function moveTo(dest, permit_dig, callback, order)
+  -- 引数処理
+  -- callbackが与えられない場合にはデフォルト関数を生成
+  callback = callback or function() os.queueEvent(EVENT_MOVETO_STEP) end
+
   -- 移動量
   local dx, dy, dz = calcRelativeCoord({getCoord()}, dest)
   local relative_dest = { x = dx, y = dy, z = dz }
@@ -249,7 +259,7 @@ function moveTo(dest, permit_dig, order)
   -- 移動処理
   for i=1, 3 do
     local axis = string.sub(order, i, i)
-    moveByCoord(axis, relative_dest[axis], permit_dig)
+    moveByCoord(axis, relative_dest[axis], permit_dig, callback)
   end
 end
 
