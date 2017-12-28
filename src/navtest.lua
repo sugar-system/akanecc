@@ -1,0 +1,31 @@
+os.loadAPI('/lib/apis/localnavi')
+
+function printLoc()
+  local loc = localnavi.getLocationTable()
+  local dir = localnavi.getDirection()
+  print(string.format('(%d,%d,%d, %s)',
+    loc.x, loc.y, loc.z, dir
+  ))
+end
+
+printLoc()
+turtle.forward()
+printLoc()
+turtle.back()
+printLoc()
+turtle.up()
+printLoc()
+turtle.down()
+printLoc()
+turtle.turnRight()
+printLoc()
+turtle.turnRight()
+printLoc()
+turtle.turnRight()
+printLoc()
+turtle.turnLeft()
+printLoc()
+turtle.turnLeft()
+printLoc()
+turtle.turnLeft()
+printLoc()
