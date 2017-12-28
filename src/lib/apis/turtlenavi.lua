@@ -89,9 +89,53 @@ initLocation()
 turtlelocsync.setSynchronizer(location)
 
 
+-----------------------------------------------------------
+-- 補助関数
+-----------------------------------------------------------
+-- 2つの座標間の相対座標を計算するよ
+-- @param src  基点の座標
+-- @param dest 目的点の座標
+-----------------------------------------------------------
+function calcRelativeCoord(src, dest)
+  local relative_coord = {}
+  for i=1, 3 do
+    relative_coord[i] = dest[i] - src[i]
+  end
+  return unpack(relative_coord)
+end
+
 --*********************************************************
 -- 移動系関数
 --*********************************************************
+
+-----------------------------------------------------------
+-- 移動系補助関数
+-----------------------------------------------------------
+-- 移動軸と移動距離の正負から移動方角を得るテーブル
+local _bearing_movebycoord = { x = {}, y = {}, z = {} }
+local _directions =
+  { const.NORTH, const.SOUTH, const.WEST, const.EAST, const.UP, const.DOWN }
+for _i, direction in ipairs(_directions) do
+  local axis, sign = bearingutils.getMatchingAxis(direction)
+  local sign_string = sign and 'positive' or 'negative'
+  _bearing_movebycoord[axis][sign_string] = direction
+end
+-----------------------------------------------------------
+-- 移動軸と移動距離を指定してタートルを移動させるよ
+-- @param axis 移動軸。xyzのどれかを文字列で指定
+-- @param distance 移動距離。負でもOK
+-- @param permit_dig 邪魔なブロックのdig許可
+-----------------------------------------------------------
+local function moveByCoord(axis, distance, permit_dig)
+  -- 軸と移動距離の正負から移動する方角を決める
+  local sign_string = (distance >= 0 ) and 'positive' or 'negative'
+  local bearing = _bearing_movebycoord[axis][sign_string]
+
+  -- 移動
+  for i=1, distance do
+    turtleapis.STEP(bearing, true, permit_dig)
+  end
+end
 
 -- ある方角を向いてる時、
 -- 特定の方角に向きを変える場合に
@@ -133,6 +177,27 @@ function faceTo(bearing)
   local bearing = _bearing_relation[getBearing()][bearing]
   assert(bearing, 'bearing error ('.. getBearing() ..'->'.. bearing ..')')
   return turtleapis.TURN(bearing)
+end
+
+-----------------------------------------------------------
+-- タートルを指定座標に移動させるよ
+-- @param dest 移動先の座標配列 { x, y, z }
+-- @param order 座標軸の優先順 'xz'のような文字列。省略可
+-- @param permit_dig 移動途中で邪魔なブロックのdig()許可
+-----------------------------------------------------------
+function moveTo(dest, order, permit_dig)
+  -- 移動量
+  local dx, dy, dz = calcRelativeCoord({getCoord()}, dest)
+  local distance = { x = dx, y = dy, z = dz }
+
+  -- 仮実装。移動順はxyz固定
+  order = 'xyz'
+
+  -- 移動処理
+  for i=1, 3 do
+  end
+
+
 end
 
 --*********************************************************
