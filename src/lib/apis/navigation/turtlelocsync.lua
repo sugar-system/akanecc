@@ -98,16 +98,29 @@ function new(location)
   -- directionに対し、座標を相対移動させる関数を格納している
   -----------------------------------------------------------
   local _move = {}
-  _move[const.NORTH] = function(n) return location.translate( 0,  0, -n) end
-  _move[const.SOUTH] = function(n) return location.translate( 0,  0,  n) end
-  _move[const.EAST ] = function(n) return location.translate( n,  0,  0) end
-  _move[const.WEST ] = function(n) return location.translate(-n,  0,  0) end
-  _move[const.UP   ] = function(n) return location.translate( 0,  n,  0) end
-  _move[const.DOWN ] = function(n) return location.translate( 0, -n,  0) end
+  -- synchronizer.move()が対応してる移動方向のリストだよ
+  local _directions =
+    { const.NORTH, const.SOUTH, const.WEST, const.EAST, const.UP, const.DOWN }
 
-  _move[const.FORWARD] = function(n) return _move[location.getBearing()](n) end
+  -- 各移動方向に対応した、座標軸を変化させる関数を作るよ
+  for _i, direction in ipairs(_directions) do
+    -- 移動方向と、変化させる座標軸・符号を調べるよ
+    local distance = { x = 0, y = 0, z = 0 }
+    local axis, sign = bearingutils.getMatchingAxis(direction)
+    distance[axis] = sign and 1 or -1
+    -- 調べた座標軸・符号で座標を変化させる関数を作るよ
+    _move[direction] = function(n)
+      return location.translate(
+        distance.x * n, distance.y * n, distance.z * n
+      )
+    end
+  end
+
+  -- forward/backは上で作ったのを使って作るよ
+  -- 向いてる方向で結果が違うよ
+  _move[const.FORWARD] = function(n) return _move[ location.getBearing() ](n) end
   _move[const.BACK   ] = function(n)
-    return _move[bearingutils.getOpposite(location.getBearing())](n)
+    return _move[ bearingutils.getOpposite(location.getBearing()) ](n)
   end
 
   -----------------------------------------------------------
