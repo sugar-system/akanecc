@@ -38,6 +38,26 @@ function overwrite(base, over)
 end
 
 -----------------------------------------------------------
+-- テーブルを複製して返すよ
+-- @param src_table 複製元テーブル
+-----------------------------------------------------------
+function dupeTable(src_table)
+  local new_table = {}
+
+  -- メタテーブル
+  local mt = getmetatable(src_table)
+  if mt then
+    setmetatable(new_table)
+  end
+
+  -- 複製
+  for k, v in pairs(src_table) do
+    new_table[k] = v
+  end
+  return new_table
+end
+
+-----------------------------------------------------------
 -- テーブルにイベントハンドラを追加するよ<br>
 -- 追加前に登録されてたハンドラもちゃんと呼ぶよ
 -- いまんとこ追加されたハンドラを削除する方法は無いよ
@@ -209,4 +229,57 @@ end
 -----------------------------------------------------------
 function getTickCount()
   return secToTick(os.clock())
+end
+
+-----------------------------------------------------------
+-- 変数の内容を出力するよ。デバッグ用
+-- @param v 内容を出力する変数
+-- @param indent インデント
+-- @param name 変数名
+-- @param outputter 出力用関数。省略するとprintをつかうよ
+-----------------------------------------------------------
+function inspect(v, indent, name, output)
+  indent = indent or ''
+  name = name or ''
+  output = output or print
+
+  if type(v) ~= 'table' then
+    local disp_v = (type(v) == 'string') and '"'.. v ..'"' or tostring(v)
+    if name then
+      output(string.format('%s%s = { %s }', indent, name, disp_v))
+    else
+      output(indent .. tostring(v))
+    end
+    return true
+  else
+    inspectTable(v, indent, name, output)
+  end
+end
+
+-----------------------------------------------------------
+-- テーブルの内容をprintするよ。デバッグ用
+-- @param v 内容を出力する変数
+-- @param indent インデント
+-- @param name 変数名
+-- @param outputter 出力用関数。省略するとprintをつかうよ
+-----------------------------------------------------------
+function inspectTable(table, indent, name, output)
+  indent = indent or ''
+  name = name or ''
+  output = output or print
+
+  output(string.format('%s%s = {', indent, name))
+  for k, v in pairs(table) do
+    inspect(v, indent ..'  ', k, output)
+  end
+  output(indent ..'}')
+end
+
+-----------------------------------------------------------
+-- inspectのログ出力版
+-----------------------------------------------------------
+function inspectToLog(v, indent, name, output)
+  local h = fs.open('/log', 'a')
+  inspect(v, indent, name, h.writeLine)
+  h.close()
 end
