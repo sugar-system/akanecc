@@ -238,7 +238,7 @@ end
 -- @param name 変数名
 -- @param outputter 出力用関数。省略するとprintをつかうよ
 -----------------------------------------------------------
-function inspect(v, indent, name, output)
+function dump(v, indent, name, output)
   indent = indent or ''
   name = name or ''
   output = output or print
@@ -252,7 +252,7 @@ function inspect(v, indent, name, output)
     end
     return true
   else
-    inspectTable(v, indent, name, output)
+    dumpTable(v, indent, name, output)
   end
 end
 
@@ -263,23 +263,23 @@ end
 -- @param name 変数名
 -- @param outputter 出力用関数。省略するとprintをつかうよ
 -----------------------------------------------------------
-function inspectTable(table, indent, name, output)
+function dumpTable(table, indent, name, output)
   indent = indent or ''
   name = name or ''
   output = output or print
 
   output(string.format('%s%s = {', indent, name))
   for k, v in pairs(table) do
-    inspect(v, indent ..'  ', k, output)
+    dump(v, indent ..'  ', k, output)
   end
   output(indent ..'}')
 end
 
 -----------------------------------------------------------
--- inspectのログ出力版
+-- dumpのログ出力版
 -----------------------------------------------------------
-function inspectToLog(v, indent, name, output)
+function dumplog(v, indent, name, output)
   local h = fs.open('/log', 'a')
-  inspect(v, indent, name, h.writeLine)
+  dump(v, indent, name, h.writeLine)
   h.close()
 end
