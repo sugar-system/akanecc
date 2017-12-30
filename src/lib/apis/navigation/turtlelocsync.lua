@@ -197,13 +197,16 @@ function new(location)
   -----------------------------------------------------------
   function synchronizer.loadLocation()
     local fh = fs.open(PATH_LOCAL_LOCATION, 'r')
+    if not fh then return false end
+    
     -- 読み込み
     local lines = {}
     for i=1, 3 do
-      lines[i] = tonumber(fh.readLine())
+      local pos = fh.readLine() or 0
+      lines[i] = tonumber(pos)
     end
     local x, y, z = unpack(lines)
-    local bearing = fh.readLine()
+    local bearing = fh.readLine() or turtleloc.INITIAL_BEARING
     fh.close()
 
     location.setCoord(x, y, z)
