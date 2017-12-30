@@ -246,7 +246,7 @@ function inspect(v, indent, name, output)
   if type(v) ~= 'table' then
     local disp_v = (type(v) == 'string') and '"'.. v ..'"' or tostring(v)
     if name then
-      output(string.format('%s%s = { %s }', indent, name, disp_v))
+      output(string.format('%s%s = %s', indent, name, disp_v))
     else
       output(indent .. tostring(v))
     end
