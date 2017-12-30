@@ -79,7 +79,7 @@ end
 -- 引数はなんでもOKでakaneCoro.resume()の戻り値として返されるよ
 -- @param ... [in/out]なんでも
 -----------------------------------------------------------
-function yeild(...)
+function yield(...)
   return coroutine.yield(MESSAGE_YIELD, ...)
 end
 
@@ -92,7 +92,7 @@ end
 function sleep(wait)
   local end_time = os.clock() + wait
   while end_time > os.clock() do
-    yeild()
+    yield()
     _sleep(0)
   end
 end
