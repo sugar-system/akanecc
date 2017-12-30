@@ -96,7 +96,7 @@ local _move_bearing = { x = {}, y = {}, z = {} }
 local _directions =
 { const.NORTH, const.SOUTH, const.WEST, const.EAST, const.UP, const.DOWN }
 for _i, direction in ipairs(_directions) do
-  local axis, sign = bearingutils.getMatchingAxis(direction)
+  local axis, sign = getMatchingAxis(direction)
   _move_bearing[axis][sign] = direction
 end
 
