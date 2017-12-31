@@ -101,11 +101,12 @@ for _i, direction in ipairs(_directions) do
 end
 
 -----------------------------------------------------------
--- 移動軸とそれに対する移動距離の符号から、移動方角を取得する
+-- 移動軸とそれに対する相対座標から、移動方角を取得する
 -- @param axis 移動軸
--- @param sign 移動軸に対する移動距離の符号
--- @return 移動方角
+-- @param coord 移動先の相対座標
+-- @return 移動方角 / 相対座標0のときはnil
 -----------------------------------------------------------
-function getMoveBearing(axis, sign)
-  return _move_bearing[axis][sign]
+function getMoveBearing(axis, coord)
+  if coord == 0 then return nil end
+  return _move_bearing[axis][coord > 0]
 end
