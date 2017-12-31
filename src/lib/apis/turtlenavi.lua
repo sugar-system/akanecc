@@ -9,6 +9,8 @@
 os.loadAPI('/lib/apis/const')
 os.loadAPI('/lib/apis/navigation/turtleloc')
 os.loadAPI('/lib/apis/navigation/turtlelocsync')
+os.loadAPI('/lib/apis/navigation/cruise')
+os.loadAPI('/lib/apis/navigation/cruise_zigzag')
 os.loadAPI('/lib/apis/turtleapis')
 
 -----------------------------------------------------------
@@ -22,6 +24,11 @@ local INITIAL_BEARING = const.NORTH
 
 -- locationオブジェクト
 local location = turtleloc.new()
+
+-----------------------------------------------------------
+-- 扱うイベント
+EVENT_MOVETO_STEP = 'moveto_step'
+EVENT_ZIGZAG_STEP = 'zigzag_step'
 
 -----------------------------------------------------------
 -- 現在地の座標を設定するよ
@@ -48,12 +55,11 @@ function getCoord()
 end
 
 -----------------------------------------------------------
--- 現在地のローカル座標テーブルを取得するよ
--- @return ローカル座標テーブル
+-- 現在地のローカル座標ベクトルを取得するよ
+-- @return ローカル座標ベクトル
 -----------------------------------------------------------
-function getCoordTable()
-  local x, y, z = getCoord()
-  return { x = x, y = y, z = z }
+function getCoordVector()
+  return vector.new(getCoord())
 end
 
 -----------------------------------------------------------
@@ -92,44 +98,6 @@ turtlelocsync.setSynchronizer(location)
 -----------------------------------------------------------
 -- 補助関数
 -----------------------------------------------------------
------------------------------------------------------------
--- 座標を現す配列を、x・y・zをキーとしたテーブルに変換するよ
--- @param coord 座標配列
--- @return 座標テーブル
------------------------------------------------------------
-function createCoordTable(coord)
-  return {
-    x = coord[1],
-    y = coord[2],
-    z = coord[3],
-  }
-end
-
------------------------------------------------------------
--- 座標を現すテーブルを、座標配列に変換するよ
--- @param coord_table 座標テーブル
--- @return 座標配列
------------------------------------------------------------
-function createCoordArray(coord_table)
-  return {
-    coord_table.x,
-    coord_table.y,
-    coord_table.z,
-  }
-end
-
------------------------------------------------------------
--- 2つの座標間の相対座標を計算するよ
--- @param src  基点の座標
--- @param dest 目的点の座標
------------------------------------------------------------
-function calcRelativeCoord(src, dest)
-  local relative_coord = {}
-  for i=1, 3 do
-    relative_coord[i] = dest[i] - src[i]
-  end
-  return unpack(relative_coord)
-end
 
 --*****************************************************************************
 --* 回転関数
@@ -185,7 +153,7 @@ end
 -----------------------------------------------------------
 -- 現在向いている方角と、移動したい相対座標から、
 -- 軸をどういう順番で移動するのが早いか調べるよ
--- @param relative_dest 相対移動距離。 { x = dx, y = dy, z = dz }なテーブル
+-- @param relative_dest 相対移動距離。ベクトル
 -- @return 軸の順番を示す文字列
 -----------------------------------------------------------
 local function getBestAxisOrder(relative_dest)
@@ -194,7 +162,7 @@ local function getBestAxisOrder(relative_dest)
   -- まず各軸の移動方向をしらべるよ
   local bearings = {}
   for _i, axis in ipairs{ 'x', 'z' } do
-    bearings[axis] = bearingutils.getMoveBearing(axis, relative_dest[axis] > 0)
+    bearings[axis] = bearingutils.getMoveBearing(axis, relative_dest[axis])
   end
 
   -- 相対方角(現在の正面・右・左・後ろ、の方角)を格納したテーブル
@@ -222,8 +190,8 @@ end
 -- 上のgetBestAxisOrder()とだいたい同じだけど、
 -- 優先しなければならない、基礎にする移動順を指定できるよ。
 -- @param base_order 基礎にする移動順。基準順。これにたいする変更は許されない。
--- @param relative_dest 相対移動距離。 { x = dx, y = dy, z = dz }なテーブル
--- @return 軸の順番を示す文字列
+-- @param relative_dest 相対移動距離。ベクトル
+-- @return 軸順テーブル
 -----------------------------------------------------------
 local function getAxisOrder(base_order, relative_dest)
   -- 基準順は無条件で確定だよ
@@ -240,7 +208,7 @@ local function getAxisOrder(base_order, relative_dest)
       order = order .. axis
     end
   end
-  return order
+  return cruise.stringToAxisOrder(order)
 end
 
 -----------------------------------------------------------
@@ -250,9 +218,9 @@ end
 -- @param permit_dig 邪魔なブロックのdig許可
 -- @param callback タートルが1歩歩くごとに呼ばれるcallback関数
 -----------------------------------------------------------
-local function moveByCoord(axis, distance, permit_dig, callback)
+function moveByCoord(axis, distance, permit_dig, callback)
   -- 軸と移動距離の正負から移動する方角を決める
-  local bearing = bearingutils.getMoveBearing(axis, distance >= 0)
+  local bearing = bearingutils.getMoveBearing(axis, distance)
 
   -- 移動
   for i=1, math.abs(distance) do
@@ -277,17 +245,38 @@ function moveTo(dest, permit_dig, callback, order)
   callback = callback or function() os.queueEvent(EVENT_MOVETO_STEP) end
 
   -- 移動量
-  local dx, dy, dz = calcRelativeCoord({getCoord()}, dest)
-  local relative_dest = { x = dx, y = dy, z = dz }
+  dest = vector.new(unpack(dest))
+  local relative_dest = dest - getCoordVector()
 
   -- 回転回数が少なくなるような移動順を取得
   order = getAxisOrder(order, relative_dest)
 
   -- 移動処理
   for i=1, 3 do
-    local axis = string.sub(order, i, i)
-    moveByCoord(axis, relative_dest[axis], permit_dig, callback)
+    local distance = relative_dest[order[i]]
+    if distance then
+      moveByCoord(order[i], distance, permit_dig, callback)
+    end
   end
+end
+
+--*****************************************************************************
+--* zigzag
+--*****************************************************************************
+-----------------------------------------------------------
+-- 指定範囲を塗りつぶすように、タートルを移動させるよ
+-- 床を貼る時なんかにつかえます
+-- 塗りつぶす範囲はstartとdestを頂点とする平面だよ
+-- @param start 開始点の座標(配列) { x, y, z }
+-- @param dest  終了点の座標(配列) { x, y, z }
+-- @param permit_dig 移動途中で邪魔なブロックのdig()許可
+-- @param callback 1歩移動する度に呼ばれるコールバック関数
+-- @param spacing 各軸の塗りつぶし間隔(?行おき)(配列) { x, y, z }
+-- @param order 座標軸の優先順 'xz'のような文字列。省略可
+-----------------------------------------------------------
+function zigzag(start, dest, permit_dig, callback, spacing, order)
+  local zz = cruise_zigzag.new(start, dest, permit_dig, callback, spacing, order)
+  zz.go()
 end
 
 --*****************************************************************************
