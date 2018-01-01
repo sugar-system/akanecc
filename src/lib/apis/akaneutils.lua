@@ -321,3 +321,16 @@ function sortTable(t)
   end
   return sorted
 end
+
+-----------------------------------------------------------
+-- vectorを座標配列に変換するよ
+-- @param v ベクトル
+-- @return 座標配列
+-----------------------------------------------------------
+function vectorToArray(v)
+  return {
+    v.x,
+    v.y,
+    v.z,
+  }
+end
