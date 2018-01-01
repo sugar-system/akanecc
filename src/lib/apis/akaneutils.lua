@@ -103,6 +103,19 @@ function prepareToWrite(path)
 end
 
 -----------------------------------------------------------
+-- 文字列を１文字ずつの配列に変換する
+-- @param str 文字列
+-- @return 文字列を分割した配列
+-----------------------------------------------------------
+function stringToArray(str)
+  local array = {}
+  for i=1, #str do
+    table.insert(array, string.sub(str, i, i))
+  end
+  return array
+end
+
+-----------------------------------------------------------
 -- 文字列をセパレータで分割する、イテレータ関数を作って返すよ
 -- セパレータが省略されると','を使うよ
 -- @param str [in]分割する文字列
@@ -279,7 +292,46 @@ end
 -- dumpのログ出力版
 -----------------------------------------------------------
 function dumplog(v, indent, name, output)
-  local h = fs.open('/log', 'a')
+  local h = fs.open('/dump.log', 'a')
   dump(v, indent, name, h.writeLine)
   h.close()
+end
+
+-----------------------------------------------------------
+-- テーブルのkey, valueのペアに対してvalue昇順でソートし、
+-- その順番通りのkeyの配列を返す
+-- table.sort()のkeyが1...nじゃない版
+-- @param t テーブル
+-- @param descend trueなら降順でソートする
+-- @return keyの配列
+-----------------------------------------------------------
+function sortTable(t, descend)
+  local for_sort = {}
+  for k, v in pairs(t) do
+    table.insert(for_sort, { key = k, value = v })
+  end
+
+  local comp = descend
+    and function(a1, a2) return a1.value > a2.value end
+    or  function(a1, a2) return a1.value < a2.value end
+  table.sort(for_sort, comp)
+
+  local sorted = {}
+  for _i, v in ipairs(for_sort) do
+    table.insert(sorted, v.key)
+  end
+  return sorted
+end
+
+-----------------------------------------------------------
+-- vectorを座標配列に変換するよ
+-- @param v ベクトル
+-- @return 座標配列
+-----------------------------------------------------------
+function vectorToArray(v)
+  return {
+    v.x,
+    v.y,
+    v.z,
+  }
 end
