@@ -292,7 +292,7 @@ end
 -- dumpのログ出力版
 -----------------------------------------------------------
 function dumplog(v, indent, name, output)
-  local h = fs.open('/log', 'a')
+  local h = fs.open('/dump.log', 'a')
   dump(v, indent, name, h.writeLine)
   h.close()
 end
@@ -302,17 +302,18 @@ end
 -- その順番通りのkeyの配列を返す
 -- table.sort()のkeyが1...nじゃない版
 -- @param t テーブル
+-- @param descend trueなら降順でソートする
 -- @return keyの配列
 -----------------------------------------------------------
-function sortTable(t)
+function sortTable(t, descend)
   local for_sort = {}
   for k, v in pairs(t) do
     table.insert(for_sort, { key = k, value = v })
   end
 
-  local comp = function(a1, a2)
-    return a1.value < a2.value
-  end
+  local comp = descend
+    and function(a1, a2) return a1.value > a2.value end
+    or  function(a1, a2) return a1.value < a2.value end
   table.sort(for_sort, comp)
 
   local sorted = {}
