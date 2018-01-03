@@ -75,7 +75,7 @@ function calcRowCountTable(relative_dest, spacing_table)
   local row_count = {}
   for _i, axis in ipairs{ 'x', 'y', 'z' } do
     if relative_dest[axis] ~= 0 then
-      row_count[axis] = 
+      row_count[axis] =
         math.ceil(math.abs(relative_dest[axis]) / (spacing_table[axis] + 1))
     end
   end
