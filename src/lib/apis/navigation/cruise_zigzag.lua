@@ -98,7 +98,7 @@ function new(start, dest, permit_dig, callback, spacing, order)
       cruise.getFirstBearing(turtlenavi.getBearing(), relative_dest)
 
     local row_count = cruise.calcRowCountTable(relative_dest, self.spacing)
-    akaneutils.dumplog(row_count, '', 'row_count')
+    akaneutils.dumplog(row_count, 'row_count')
 
     -- 一番列数が少なくなる順番で移動する
     -- (TURNの回数が少なくなる分、塗りつぶしが早く終る)
@@ -208,9 +208,9 @@ function new(start, dest, permit_dig, callback, spacing, order)
       distances[axis2] = self.getPitch()
     end
 
-    akaneutils.dumplog(self.order, '', 'axis_order')
-    akaneutils.dumplog(axis1, '', 'axis1')
-    akaneutils.dumplog(axis2, '', 'axis2')
+    akaneutils.dumplog(self.order, 'axis_order')
+    akaneutils.dumplog(axis1, 'axis1')
+    akaneutils.dumplog(axis2, 'axis2')
     -- 平面塗りつぶし
     repeat
       turtlenavi.moveByCoord(axis1, distances[axis1], self.permit_dig, self.onStep)

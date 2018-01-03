@@ -251,17 +251,17 @@ end
 -- @param name 変数名
 -- @param outputter 出力用関数。省略するとprintをつかうよ
 -----------------------------------------------------------
-function dump(v, _, name, output)
-  output(textutils.serialize(v))
+function dump(v, name, output)
+  output(name .. textutils.serialize(v))
 end
 
 
 -----------------------------------------------------------
 -- dumpのログ出力版
 -----------------------------------------------------------
-function dumplog(v, _, name, output)
+function dumplog(v, name)
   local h = fs.open('/dump.log', 'a')
-  dump(v, _, name, h.writeLine)
+  dump(v, name, h.writeLine)
   h.close()
 end
 
