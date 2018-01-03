@@ -97,14 +97,14 @@ function new(setting)
       for i=1, 3 do
         turtleapis.DIG[self.direction_mawaru](true) -- 回ってから掘るよ
       end
-      akanecoro.yeild()
+      akanecoro.yield()
     end
   end
 
   -----------------------------------------------------------
   -- カボチャタワーを上下移動するよ
   -- 一番上から下へ、または一番下から上へ移動するよ
-  -- 1階層ごとにyeildで止まるで
+  -- 1階層ごとにyieldで止まるで
   -- @param direction [in]方向
   -----------------------------------------------------------
   function kabot.moveVertical(direction)
@@ -114,7 +114,7 @@ function new(setting)
       for i = 1, self.level_height do
         turtleapis.STEP[direction]()
       end
-      akanecoro.yeild()
+      akanecoro.yield()
     end
     self.arrival(direction)  -- 端に着いたよ
   end
