@@ -251,49 +251,17 @@ end
 -- @param name 変数名
 -- @param outputter 出力用関数。省略するとprintをつかうよ
 -----------------------------------------------------------
-function dump(v, indent, name, output)
-  indent = indent or ''
-  name = name or ''
-  output = output or print
-
-  if type(v) ~= 'table' then
-    local disp_v = (type(v) == 'string') and '"'.. v ..'"' or tostring(v)
-    if name then
-      output(string.format('%s%s = %s', indent, name, disp_v))
-    else
-      output(indent .. tostring(v))
-    end
-    return true
-  else
-    dumpTable(v, indent, name, output)
-  end
+function dump(v, _, name, output)
+  output(textutils.serialize(v))
 end
 
------------------------------------------------------------
--- テーブルの内容をprintするよ。デバッグ用
--- @param v 内容を出力する変数
--- @param indent インデント
--- @param name 変数名
--- @param outputter 出力用関数。省略するとprintをつかうよ
------------------------------------------------------------
-function dumpTable(table, indent, name, output)
-  indent = indent or ''
-  name = name or ''
-  output = output or print
-
-  output(string.format('%s%s = {', indent, name))
-  for k, v in pairs(table) do
-    dump(v, indent ..'  ', k, output)
-  end
-  output(indent ..'}')
-end
 
 -----------------------------------------------------------
 -- dumpのログ出力版
 -----------------------------------------------------------
-function dumplog(v, indent, name, output)
+function dumplog(v, _, name, output)
   local h = fs.open('/dump.log', 'a')
-  dump(v, indent, name, h.writeLine)
+  dump(v, _, name, h.writeLine)
   h.close()
 end
 
