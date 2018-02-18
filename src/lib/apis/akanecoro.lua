@@ -53,13 +53,12 @@ function resume(coro)
 
   while true do
     if isListenableEvent(event_wait_for, event_data) then -- イベント待受やで
-       -- コルーチンを働かすで
-      local retvals = { coroutine.resume(coro, unpack(event_data)) }
-      local ok, message = retvals[1], retvals[2]
+      -- コルーチンを働かすで
+      local ok, message = coroutine.resume(coro, unpack(event_data))
       assert(ok, message) -- コルーチンがなんかあかんかったらerror投げる
 
       if message == MESSAGE_YIELD then
-        return unpack(retvals)  -- 中断メッセージが来たら一旦もどるで
+        return ok, message  -- 中断メッセージが来たら一旦もどるで
       end
 
       event_wait_for = message
@@ -68,7 +67,7 @@ function resume(coro)
       end
     end
 
-    event_data = { os.pullEventRaw() } -- イベント確認や！
+    event_data = {os.pullEventRaw()} -- イベント確認や！
   end
 end
 
@@ -80,7 +79,11 @@ end
 -- @param ... [in/out]なんでも
 -----------------------------------------------------------
 function yield(...)
-  return coroutine.yield(MESSAGE_YIELD, ...)
+  local event =  {coroutine.yield(MESSAGE_YIELD, ...)}
+  if event[1] == 'terminate' then
+    error('Terminated')
+  end
+  return event
 end
 
 -----------------------------------------------------------
@@ -118,8 +121,7 @@ end
 -- @param limit [in]処理を続行する、コルーチン数の下限
 -----------------------------------------------------------
 local function runUntilLimit(coroutines, limit)
-  local count = #coroutines
-  local living = count
+  local living = #coroutines
 
   while true do
     for i, coro in ipairs(coroutines) do
