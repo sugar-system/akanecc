@@ -32,7 +32,7 @@ turi.dir_store_other = 'down'
 
 -------------------------------------
 -- 釣りの待ち時間
-turi.wait_fishing    = 30
+turi.wait_fishing    = 20
 
 -------------------------------------
 -- 統計情報を自動読込するかどうか
@@ -160,39 +160,6 @@ local function gomi_bunrui(slot_no, force)
 end
 
 turi.bunrui = gomi_bunrui
-
------------------------------------------------------------
--- 釣りサイクル時間統計出力ブロック
------------------------------------------------------------
-do
-  local start_time = 0
-
------------------------------------------------------------
--- 釣りサイクル(開始・待機・釣り上げ)の開始時間を記録する
------------------------------------------------------------
-  local function setStartTime(sender)
-    start_time = os.clock()
-  end
-
------------------------------------------------------------
--- 釣りサイクル(開始・待機・釣り上げ)の消費時間と、
--- 釣り待機時間との差をファイル出力する
------------------------------------------------------------
-  local function writeCycleTime(sender, result)
-    local diff = akaneutils.secToTick(
-      os.clock() - start_time - sender.wait_fishing
-    )
-    local h = fs.open(stats_cycle_path, 'a')
-    h.writeLine(string.format('%f,%s', diff, tostring(result)))
-    h.close()
-  end
-
-  -------------------------------------
-  -- イベントハンドラに追加
-  -------------------------------------
-  akaneutils.addHandler(turi, 'start_fishing', setStartTime)
-  akaneutils.addHandler(turi, 'end_fishing',   writeCycleTime)
-end
 
 -----------------------------------------------------------
 turi.hokyu      = turtlefuel.new(hokyu)
