@@ -252,6 +252,7 @@ end
 -- @param outputter 出力用関数。省略するとprintをつかうよ
 -----------------------------------------------------------
 function dump(v, name, output)
+  output = output or print
   output(name .. textutils.serialize(v))
 end
 
