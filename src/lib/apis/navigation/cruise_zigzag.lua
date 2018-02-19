@@ -160,7 +160,7 @@ function new(start, dest, permit_dig, callback, spacing, order)
   -- 一歩移動するごとに呼ばれる
   -----------------------------------------------------------
   function zigzag.onStep()
-    self.callback()
+    self.callback(self)
     self.checkPassed()
   end
 
