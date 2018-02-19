@@ -135,7 +135,7 @@ function new(start, dest, permit_dig, callback, spacing, order)
     for _i, cp in ipairs(self.checkpoints) do
       local passed = true
       for _i, axis in ipairs{ 'x', 'y', 'z' } do
-        if cp.point[axis] and cp.point[axis] ~= current[axis] then
+        if cp.point[axis] and math.floor(cp.point[axis]) ~= math.floor(current[axis]) then
           passed = false
           break
         end
